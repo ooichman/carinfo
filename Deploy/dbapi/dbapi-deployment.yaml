@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dbapi
+  name: dbapi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dbapi
+  template:
+    metadata:
+      labels:
+        app: dbapi
+    spec:
+      containers:
+      - image: quay.io/two.oes/carinfo-dbapi:latest
+        name: dbapi
+        serviceAccount: default
+        serviceAccountName: default
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_NAME
+          value: carinfo
+        - name: DB_USER
+          value: carinfo
+        - name: DB_PASSWORD
+          value: CarInfoPass
+        - name: DB_HOST
+          value: mariadb

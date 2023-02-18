@@ -1,0 +1,22 @@
+FROM golang:alpine as build
+#FROM ubi8/go-toolset as build
+
+WORKDIR /opt/app-root
+ENV GOPATH=/opt/app-root/
+COPY src src
+WORKDIR /opt/app-root/src/frontend/
+      
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /tmp/frontend
+
+
+#FROM scratch
+FROM ubi9/ubi-minimal
+
+COPY --from=build /etc/passwd /etc/passwd
+COPY --from=build /tmp/frontend /usr/bin/frontend
+
+USER 1001
+
+EXPOSE 8080
+CMD ["/usr/bin/frontend"]
+ENTRYPOINT ["/usr/bin/frontend"]
