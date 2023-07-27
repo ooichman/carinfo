@@ -10,7 +10,6 @@ import (
 	"bytes"
 )
 
-
 type CarInfoRequest struct {
 
 	Module string `json:module`
@@ -42,7 +41,7 @@ func QueryRes(w http.ResponseWriter, r *http.Request) {
 
 	var requestdata CarInfoRequest
 
-	if r.URL.Path != "/query" {
+	if r.URL.Path != "/v1" {
 		http.Error(w, "the Provided URL is invalid\n", http.StatusBadRequest)
 		fmt.Fprintf(os.Stderr, "The provided URL is invalid\n")
 
@@ -160,7 +159,7 @@ func main() {
 
 	portnum := getEnv("PORT", "8080")
 	http.HandleFunc("/static", StaticRes)
-	http.HandleFunc("/query", QueryRes)
+	http.HandleFunc("/v1", QueryRes)
 	log.Printf("Staring HTTP Service on port %v", portnum)
 	log.Fatal(http.ListenAndServe(":"+portnum, nil))
 	}
