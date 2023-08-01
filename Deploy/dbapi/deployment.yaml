@@ -17,8 +17,6 @@ spec:
       containers:
       - image: quay.io/two.oes/carinfo-dbapi:latest
         name: dbapi
-        serviceAccount: default
-        serviceAccountName: default
         ports:
         - containerPort: 8080
         env:
