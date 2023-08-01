@@ -13,7 +13,7 @@ spec:
     insecureEdgeTerminationPolicy: Redirect
     termination: edge
   to:
-    kind: ""
+    kind: Service
     name: frontend
-    weight: null
+    weight: 100
 status: {}
