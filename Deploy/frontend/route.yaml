@@ -1,0 +1,19 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app: frontend
+    app.kubernetes.io/instance: carinfo
+  name: frontend
+spec:
+  port:
+    targetPort: frontend
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: ""
+    name: frontend
+    weight: null
+status: {}
