@@ -1,5 +1,5 @@
-FROM golang:alpine as build
-#FROM ubi8/go-toolset as build
+#FROM golang:alpine as build
+FROM registry.redhat.io/ubi9/go-toolset as build
 
 WORKDIR /opt/app-root
 ENV GOPATH=/opt/app-root/
@@ -9,7 +9,7 @@ WORKDIR /opt/app-root/src/dbapi/
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /tmp/dbapi
 
 
-FROM ubi9/ubi-minimal
+FROM registry.redhat.io/ubi9-minimal
 #FROM scratch
 
 COPY --from=build /etc/passwd /etc/passwd
