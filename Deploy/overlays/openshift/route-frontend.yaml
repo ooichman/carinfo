@@ -1,11 +1,10 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  creationTimestamp: null
+  name: frontend
   labels:
     app: frontend
     app.kubernetes.io/instance: carinfo
-  name: frontend
 spec:
   port:
     targetPort: frontend
@@ -16,4 +15,3 @@ spec:
     kind: Service
     name: frontend
     weight: 100
-status: {}

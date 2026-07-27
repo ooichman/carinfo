@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-api
+  labels:
+    app: app-api
+spec:
+  ports:
+  - name: app-api
+    port: 8080
+    targetPort: 8080
+  - name: app-api-ssl
+    port: 8443
+    targetPort: 8443
+  selector:
+    app: app-api

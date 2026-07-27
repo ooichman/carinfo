@@ -21,7 +21,9 @@ spec:
         ports:
         - containerPort: 8080
         env:
-        - name: DBAPI_URL
-          value: 'http://dbapi:8080/query'
+        - name: APP_API_URL
+          value: 'http://app-api:8080'
+        - name: WEB_URL
+          value: 'http://webapp:8080'
         - name: PORT
           value: "8080"

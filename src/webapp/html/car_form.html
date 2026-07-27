@@ -1,0 +1,52 @@
+{{define "car_form"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{template "head" .}}
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+<main class="page">
+  {{template "brand" .}}
+  {{template "flash" .}}
+
+  <section class="panel form-panel">
+    <div class="panel-head">
+      <h2>{{if .IsEdit}}Edit car{{else}}Add car{{end}}</h2>
+      <a class="btn btn-ghost" href="/">Back to fleet</a>
+    </div>
+
+    <form class="car-form" method="post" action="{{.FormAction}}">
+      <label>
+        <span>Name</span>
+        <input name="name" required value="{{.Car.Name}}" placeholder="Chassis nickname">
+      </label>
+      <label>
+        <span>Year</span>
+        <input name="year" type="number" min="1886" max="2100" required value="{{.Car.Year}}">
+      </label>
+      <label>
+        <span>Condition</span>
+        <input name="condition" required value="{{.Car.Condition}}" placeholder="new / mid condition / Old">
+      </label>
+      <label>
+        <span>Manufacture</span>
+        <input name="manufacture" required value="{{.Car.Manufacture}}" placeholder="Volvo">
+      </label>
+      <label>
+        <span>Module</span>
+        <input name="module" value="{{.Car.Module}}" placeholder="B5252S">
+      </label>
+      <label class="full">
+        <span>Reason</span>
+        <textarea name="reason" rows="3" placeholder="Why is it in inventory?">{{.Car.Reason}}</textarea>
+      </label>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">{{if .IsEdit}}Save changes{{else}}Create car{{end}}</button>
+      </div>
+    </form>
+  </section>
+</main>
+</body>
+</html>
+{{end}}

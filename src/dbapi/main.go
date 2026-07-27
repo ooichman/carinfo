@@ -134,39 +134,77 @@ func sqlHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sqlinit() {
-
-	dbuser := getEnv("DB_USER","carinfo")
+	dbuser := getEnv("DB_USER", "carinfo")
 	dbpassword := getEnv("DB_PASSWORD", "CarInfoPass")
 	dbhost := getEnv("DB_HOST", "localhost")
 	dbname := getEnv("DB_NAME", "carinfo")
-
-	// id:password@tcp(your-mariadb-uri.com:3306)/dbname
 	connstring := dbuser + ":" + dbpassword + "@tcp(" + dbhost + ":3306)/" + dbname + "?multiStatements=true"
 
 	fmt.Fprintf(os.Stdout, "Starting dbapi with string: %s\n", connstring)
-	// creating a database handler , confirm the driver is present 
-	db , _ := sql.Open("mysql", connstring)
+
+	var db *sql.DB
+	var err error
+	for attempt := 1; attempt <= 30; attempt++ {
+		db, err = sql.Open("mysql", connstring)
+		if err == nil {
+			var version string
+			err = db.QueryRow("SELECT VERSION()").Scan(&version)
+			if err == nil {
+				fmt.Fprintf(os.Stdout, "Connected to : %v\n", version)
+				break
+			}
+			db.Close()
+		}
+		fmt.Fprintf(os.Stderr, "waiting for mariadb (attempt %d/30): %v\n", attempt, err)
+		time.Sleep(2 * time.Second)
+	}
+	if err != nil {
+		log.Fatalf("unable to connect to mariadb: %v", err)
+	}
 	defer db.Close()
 
-	// Connect and check the server version
-	var version string
-	db.QueryRow("Select version()").Scan(&version)
-	fmt.Fprintf(os.Stdout, "Connected to : %v\n", version)
-
 	var tablecheck int
-	db.QueryRow("select count(*) from cars_vendors where vendor_id = 1").Scan(&tablecheck)
+	err = db.QueryRow("SELECT COUNT(*) FROM cars_vendors WHERE vendor_id = 1").Scan(&tablecheck)
+	if err == nil && tablecheck == 1 {
+		fmt.Fprintf(os.Stdout, "schema already initialized\n")
+		return
+	}
 
-	if tablecheck != 1 {
-	// creating the tables if tables do not exists
-	
-		db.QueryRow("create table if not exists cars_vendors (vendor_id int auto_increment, vendor_name varchar(255) not null, car_module varchar(255),created_at timestamp default current_timestamp, primary key(vendor_id))")
-		time.Sleep(2 * time.Second)
-	    db.QueryRow("create table if not exists cars (car_id int auto_increment, vendor_id int,car_name varchar(255) not null,sell_condition varchar(255), reason text, inventory_date date , car_year int,created_at timestamp default current_timestamp, foreign key(vendor_id) references cars_vendors(vendor_id), primary key(car_id))")
-	    time.Sleep(2 * time.Second)
-    	db.QueryRow("insert into cars_vendors(vendor_name,car_module) values('Volvo','B5252S'),('Ford','escort'),('Alfa Romeo','Julietta'),('Subaru','impreza'),('Tesla','2012'),('Toyota','Corolla')")
-    	time.Sleep(2 * time.Second)
-    	db.QueryRow("insert into cars(vendor_id,car_name,sell_condition,reason,inventory_date,car_year) values('1','nency','new','out of the factory',now(),'1983'),('3','Jhonny','mid condition','Bad gear',now(),'1985'),('6','Barbara','Old','the Engine is not working',now(),'2011')")
-    }
+	fmt.Fprintf(os.Stdout, "initializing schema and seed data\n")
+	stmts := []string{
+		`CREATE TABLE IF NOT EXISTS cars_vendors (
+			vendor_id INT AUTO_INCREMENT,
+			vendor_name VARCHAR(255) NOT NULL,
+			car_module VARCHAR(255),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY(vendor_id)
+		)`,
+		`CREATE TABLE IF NOT EXISTS cars (
+			car_id INT AUTO_INCREMENT,
+			vendor_id INT,
+			car_name VARCHAR(255) NOT NULL,
+			sell_condition VARCHAR(255),
+			reason TEXT,
+			inventory_date DATE,
+			car_year INT,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY(vendor_id) REFERENCES cars_vendors(vendor_id),
+			PRIMARY KEY(car_id)
+		)`,
+		`INSERT INTO cars_vendors(vendor_name, car_module) VALUES
+			('Volvo','B5252S'),('Ford','escort'),('Alfa Romeo','Julietta'),
+			('Subaru','impreza'),('Tesla','2012'),('Toyota','Corolla')`,
+		`INSERT INTO cars(vendor_id, car_name, sell_condition, reason, inventory_date, car_year) VALUES
+			(1,'nency','new','out of the factory',CURDATE(),1983),
+			(3,'Jhonny','mid condition','Bad gear',CURDATE(),1985),
+			(6,'Barbara','Old','the Engine is not working',CURDATE(),2011)`,
+	}
+	for _, stmt := range stmts {
+		if _, err := db.Exec(stmt); err != nil {
+			log.Fatalf("schema init failed: %v\nSQL: %s", err, stmt)
+		}
+	}
+	fmt.Fprintf(os.Stdout, "schema initialization complete\n")
 }
 
 func main() {
@@ -174,6 +212,8 @@ func main() {
 	sqlinit()
 	portnum := getEnv("PORT", "8080")
 	http.HandleFunc("/query", sqlHandler)
+	http.HandleFunc("/cars", carsHandler)
+	http.HandleFunc("/cars/", carsHandler)
 	log.Printf("Staring HTTP Service on port %v", portnum)
 	log.Fatal(http.ListenAndServe(":"+portnum, nil))
 }

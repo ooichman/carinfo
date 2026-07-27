@@ -15,7 +15,7 @@ spec:
         app: dbapi
     spec:
       containers:
-      - image: quay.io/two.oes/carinfo-dbapi:latest
+      - image: quay.io/ooichman/carinfo/dbapi:latest
         name: dbapi
         ports:
         - containerPort: 8080

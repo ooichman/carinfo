@@ -1,0 +1,60 @@
+{{define "cars"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{template "head" .}}
+</head>
+<body>
+<div class="bg-glow" aria-hidden="true"></div>
+<main class="page">
+  {{template "brand" .}}
+  {{template "flash" .}}
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Fleet</h2>
+      <a class="btn btn-primary" href="/cars/new">Add car</a>
+    </div>
+
+    {{if .Cars}}
+    <div class="table-wrap">
+      <table class="cars-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Year</th>
+            <th>Condition</th>
+            <th>Reason</th>
+            <th>Module</th>
+            <th>Maker</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Cars}}
+          <tr>
+            <td class="name">{{.Name}}</td>
+            <td>{{.Year}}</td>
+            <td><span class="{{chipClass .Condition}}">{{.Condition}}</span></td>
+            <td class="muted">{{.Reason}}</td>
+            <td>{{.Module}}</td>
+            <td>{{.Manufacture}}</td>
+            <td class="actions">
+              <a class="btn btn-ghost" href="/cars/{{.ID}}/edit">Edit</a>
+              <form class="inline" method="post" action="/cars/{{.ID}}/delete" onsubmit="return confirm('Delete this car?');">
+                <button class="btn btn-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{else}}
+    <p class="empty">No cars yet. <a href="/cars/new">Add the first one</a>.</p>
+    {{end}}
+  </section>
+</main>
+</body>
+</html>
+{{end}}

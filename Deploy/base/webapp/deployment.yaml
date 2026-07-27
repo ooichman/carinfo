@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: webapp
+  name: webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: webapp
+    spec:
+      containers:
+      - image: quay.io/ooichman/carinfo/webapp:latest
+        name: carinfo-webapp
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DBAPI_URL
+          value: 'http://dbapi:8080'
+        - name: PORT
+          value: "8080"
+        - name: HTML_DIR
+          value: /opt/app-root/html

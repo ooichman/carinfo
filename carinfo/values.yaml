@@ -5,10 +5,18 @@
 replicaCount: 1
 
 image:
-  repository: carinfo
+  repository: quay.io/ooichman/carinfo
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
+
+# Per-component image names under quay.io/ooichman/carinfo/
+images:
+  frontend: quay.io/ooichman/carinfo/frontend:latest
+  appApi: quay.io/ooichman/carinfo/app-api:latest
+  dbapi: quay.io/ooichman/carinfo/dbapi:latest
+  webapp: quay.io/ooichman/carinfo/webapp:latest
+  mariadb: mariadb:latest
 
 imagePullSecrets: []
 nameOverride: ""
@@ -20,7 +28,7 @@ serviceAccount:
     automount: true
     annotations: {}
     name: ""
-  frontend:
+  app-api:
     create: true
     automount: true
     annotations: {}
@@ -52,11 +60,11 @@ service:
   dbapi:
     type: ClusterIP
     port: 8080
-  frontend:
+  app-api:
     type: ClusterIP
     port: 8080
     targetPort: 8080
-  frontend-ssl
+  app-api-ssl:
     type: ClusterIP 
     port: 8443
     targetPort: 8443
