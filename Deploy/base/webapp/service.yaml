@@ -4,10 +4,15 @@ metadata:
   name: webapp
   labels:
     app: webapp
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: webapp-tls
 spec:
   ports:
   - name: webapp
     port: 8080
     targetPort: 8080
+  - name: webapp-ssl
+    port: 8443
+    targetPort: 8443
   selector:
     app: webapp

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -191,10 +192,54 @@ func StaticRes(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	portnum := getEnv("PORT", "8080")
-	http.HandleFunc("/static", StaticRes)
-	http.HandleFunc("/v1", QueryRes)
-	http.HandleFunc("/v1/cars", CarsRes)
-	http.HandleFunc("/v1/cars/", CarsRes)
-	log.Printf("Starting app-api on port %s (dbapi=%s)", portnum, dbapiBase())
-	log.Fatal(http.ListenAndServe(":"+portnum, nil))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/static", StaticRes)
+	mux.HandleFunc("/v1", QueryRes)
+	mux.HandleFunc("/v1/cars", CarsRes)
+	mux.HandleFunc("/v1/cars/", CarsRes)
+	log.Printf("Starting app-api (dbapi=%s)", dbapiBase())
+	serveHTTPAndTLS(mux, portnum)
+}
+
+func serveHTTPAndTLS(handler http.Handler, httpPort string) {
+	tlsPort := getEnv("TLS_PORT", "8443")
+	certFile := getEnv("TLS_CERT_FILE", "/etc/tls/tls.crt")
+	keyFile := getEnv("TLS_KEY_FILE", "/etc/tls/tls.key")
+
+	if useTLS() {
+		go func() {
+			if err := waitForTLSFiles(certFile, keyFile, 60); err != nil {
+				log.Printf("TLS disabled: %v", err)
+				return
+			}
+			log.Printf("HTTPS listening on :%s (cert=%s)", tlsPort, certFile)
+			if err := http.ListenAndServeTLS(":"+tlsPort, certFile, keyFile, handler); err != nil {
+				log.Fatalf("HTTPS server stopped: %v", err)
+			}
+		}()
+	} else {
+		log.Printf("TLS disabled (set USE_TLS=true to enable)")
+	}
+
+	log.Printf("HTTP listening on :%s", httpPort)
+	log.Fatal(http.ListenAndServe(":"+httpPort, handler))
+}
+
+func useTLS() bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("USE_TLS")))
+	return v == "true" || v == "1" || v == "yes" || v == "on"
+}
+
+func waitForTLSFiles(certFile, keyFile string, attempts int) error {
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		_, errCert := os.Stat(certFile)
+		_, errKey := os.Stat(keyFile)
+		if errCert == nil && errKey == nil {
+			return nil
+		}
+		lastErr = fmt.Errorf("waiting for TLS files (cert=%v key=%v)", errCert, errKey)
+		time.Sleep(time.Second)
+	}
+	return lastErr
 }

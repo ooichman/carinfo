@@ -4,6 +4,8 @@ metadata:
   name: app-api
   labels:
     app: app-api
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: app-api-tls
 spec:
   ports:
   - name: app-api

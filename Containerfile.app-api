@@ -17,6 +17,6 @@ COPY --from=build /tmp/app-api /usr/bin/app-api
 
 USER 1001
 
-EXPOSE 8080
+EXPOSE 8080 8443
 CMD ["/usr/bin/app-api"]
 ENTRYPOINT ["/usr/bin/app-api"]

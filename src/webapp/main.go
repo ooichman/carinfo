@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type PageData struct {
@@ -100,11 +102,55 @@ func main() {
 	port := getEnv("PORT", "8080")
 
 	staticDir := filepath.Join(dir, "static")
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
-	http.HandleFunc("/", router)
+	mux := http.NewServeMux()
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+	mux.HandleFunc("/", router)
 
-	log.Printf("Starting webapp on port %s (html=%s dbapi=%s)", port, dir, dbapi.BaseURL)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Printf("Starting webapp (html=%s dbapi=%s)", dir, dbapi.BaseURL)
+	serveHTTPAndTLS(mux, port)
+}
+
+func serveHTTPAndTLS(handler http.Handler, httpPort string) {
+	tlsPort := getEnv("TLS_PORT", "8443")
+	certFile := getEnv("TLS_CERT_FILE", "/etc/tls/tls.crt")
+	keyFile := getEnv("TLS_KEY_FILE", "/etc/tls/tls.key")
+
+	if useTLS() {
+		go func() {
+			if err := waitForTLSFiles(certFile, keyFile, 60); err != nil {
+				log.Printf("TLS disabled: %v", err)
+				return
+			}
+			log.Printf("HTTPS listening on :%s (cert=%s)", tlsPort, certFile)
+			if err := http.ListenAndServeTLS(":"+tlsPort, certFile, keyFile, handler); err != nil {
+				log.Fatalf("HTTPS server stopped: %v", err)
+			}
+		}()
+	} else {
+		log.Printf("TLS disabled (set USE_TLS=true to enable)")
+	}
+
+	log.Printf("HTTP listening on :%s", httpPort)
+	log.Fatal(http.ListenAndServe(":"+httpPort, handler))
+}
+
+func useTLS() bool {
+	v := strings.ToLower(strings.TrimSpace(os.Getenv("USE_TLS")))
+	return v == "true" || v == "1" || v == "yes" || v == "on"
+}
+
+func waitForTLSFiles(certFile, keyFile string, attempts int) error {
+	var lastErr error
+	for i := 0; i < attempts; i++ {
+		_, errCert := os.Stat(certFile)
+		_, errKey := os.Stat(keyFile)
+		if errCert == nil && errKey == nil {
+			return nil
+		}
+		lastErr = fmt.Errorf("waiting for TLS files (cert=%v key=%v)", errCert, errKey)
+		time.Sleep(time.Second)
+	}
+	return lastErr
 }
 
 func router(w http.ResponseWriter, r *http.Request) {

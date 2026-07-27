@@ -19,9 +19,29 @@ spec:
       - image: quay.io/ooichman/carinfo/app-api:latest
         name: carinfo-app-api
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
         env:
         - name: DBAPI_URL
           value: 'http://dbapi:8080'
         - name: PORT
           value: "8080"
+        - name: USE_TLS
+          value: "true"
+        - name: TLS_PORT
+          value: "8443"
+        - name: TLS_CERT_FILE
+          value: /etc/tls/tls.crt
+        - name: TLS_KEY_FILE
+          value: /etc/tls/tls.key
+        volumeMounts:
+        - name: tls
+          mountPath: /etc/tls
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: app-api-tls
+          optional: true

@@ -65,7 +65,15 @@ service:
     port: 8080
     targetPort: 8080
   app-api-ssl:
-    type: ClusterIP 
+    type: ClusterIP
+    port: 8443
+    targetPort: 8443
+  webapp:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  webapp-ssl:
+    type: ClusterIP
     port: 8443
     targetPort: 8443
 

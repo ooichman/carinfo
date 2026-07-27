@@ -20,6 +20,6 @@ ENV HTML_DIR=/opt/app-root/html
 
 USER 1001
 
-EXPOSE 8080
+EXPOSE 8080 8443
 CMD ["/usr/bin/webapp"]
 ENTRYPOINT ["/usr/bin/webapp"]
